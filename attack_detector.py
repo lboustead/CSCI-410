@@ -43,16 +43,24 @@ def pattern_prototype_detection(events):
     return {"multi_user_access": anomalies}
 
 
+from collections import defaultdict
+
 def sql_injection_detection(events):
     suspicious_patterns = [
         r"(\bor\b\s+1=1)", r"--", r";\s*drop\s+table", r"union\s+select",
         r";\s*rm\s+-rf\s+/", r"xp_cmdshell", r"%27", r"' --", r"'#"
     ]
     pattern_re = re.compile("|".join(suspicious_patterns), re.IGNORECASE)
-    flagged = []
+    
+    counts = defaultdict(int)
+
     for e in events:
         if pattern_re.search(e["line"]):
-            flagged.append({"ip": e["ip"], "line": e["line"]})
+            key = (e["ip"] or "Unknown IP", e["line"])
+            counts[key] += 1
+    
+    # Convert to list of dicts
+    flagged = [{"ip": ip, "line": line, "count": count} for (ip, line), count in counts.items()]
     return flagged
 
 
@@ -72,7 +80,8 @@ def determine_attack(known, prototype, injections):
     if injections:
         report.append("\nInjection attempts detected:")
         for item in injections:
-            report.append(f" - {item['ip'] or 'Unknown IP'}: {item['line']}")
+            report.append(f" - {item['ip']}: {item['line']} (x{item['count']})")
+
 
     if not report:
         report.append("No suspicious activity detected.")
