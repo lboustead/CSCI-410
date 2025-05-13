@@ -1,0 +1,20 @@
+2025-05-12 10:00:00 Login attempt: user admin' OR '1'='1 from 192.168.1.5
+2025-05-12 10:00:10 Login failed: user admin' -- from 192.168.1.5
+2025-05-12 10:00:20 GET /login?user=admin'--&pass=123 from 192.168.1.5
+2025-05-12 10:01:00 Suspicious input detected: '; DROP TABLE users; -- from 203.0.113.22
+2025-05-12 10:01:30 Executing: union select * from credentials from 203.0.113.22
+2025-05-12 10:01:50 Attempted login: user=test password=' OR 1=1 -- from 10.0.0.50
+2025-05-12 10:02:00 Input received: xp_cmdshell('net user') from 172.16.0.10
+2025-05-12 10:02:10 GET /search?q=%27%20UNION%20SELECT%20password%20FROM%20users from 172.16.0.10
+2025-05-12 10:02:30 Payload: '; rm -rf / -- from 10.10.10.10
+2025-05-12 10:03:00 Login attempt: admin'# from 198.51.100.100
+2025-05-12 10:03:15 Attempted login: ' OR '1'='1'; -- from 198.51.100.100
+2025-05-12 10:03:30 GET /profile?user=admin%27%20-- from 198.51.100.100
+2025-05-12 10:03:45 SQLi payload: ' OR 1=1 -- from 198.51.100.100
+2025-05-12 10:04:00 Suspicious input: '; SELECT * FROM users from 10.1.1.10
+2025-05-12 10:04:15 POST /api/login { "username": "' OR 1=1 --", "password": "x" } from 10.1.1.10
+2025-05-12 10:04:30 GET /login?user=%27%20-- from 10.1.1.10
+2025-05-12 10:05:00 Detected: '; DROP TABLE logs from 203.0.113.22
+2025-05-12 10:05:10 Login bypass attempt: admin'-- from 203.0.113.22
+2025-05-12 10:05:30 Input includes SQLi: ' OR 1=1 from 203.0.113.22
+2025-05-12 10:06:00 GET /admin?search=' -- from 203.0.113.22

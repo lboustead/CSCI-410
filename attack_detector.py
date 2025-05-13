@@ -43,29 +43,50 @@ def pattern_prototype_detection(events):
     return {"multi_user_access": anomalies}
 
 
-def attack_detection(known, prototype):
+def sql_injection_detection(events):
+    suspicious_patterns = [
+        r"(\bor\b\s+1=1)", r"--", r";\s*drop\s+table", r"union\s+select",
+        r";\s*rm\s+-rf\s+/", r"xp_cmdshell", r"%27", r"' --", r"'#"
+    ]
+    pattern_re = re.compile("|".join(suspicious_patterns), re.IGNORECASE)
+    flagged = []
+    for e in events:
+        if pattern_re.search(e["line"]):
+            flagged.append({"ip": e["ip"], "line": e["line"]})
+    return flagged
+
+
+def determine_attack(known, prototype, injections):
     report = []
+
     if known["brute_force"]:
-        report.append("Brute-force attack detected from:")
+        report.append("\nBrute-force attack detected from:")
         for ip, count in known["brute_force"].items():
             report.append(f" - {ip}: {count} failed logins")
+
     if prototype["multi_user_access"]:
-        report.append("Prototype anomaly detected (multi-user access) from:")
+        report.append("\nPrototype anomaly detected (multi-user access) from:")
         for ip, users in prototype["multi_user_access"].items():
             report.append(f" - {ip}: accessed {len(users)} users ({', '.join(users)})")
+
+    if injections:
+        report.append("\nInjection attempts detected:")
+        for item in injections:
+            report.append(f" - {item['ip'] or 'Unknown IP'}: {item['line']}")
+
     if not report:
         report.append("No suspicious activity detected.")
     return report
 
 
 def main():
-    # Call all functions in order
     path = input("Enter path to log file: ")
     log_lines = load_file(path)
     parsed_data = analyze_log(log_lines)
     known_results = known_pattern_detection(parsed_data)
     proto_results = pattern_prototype_detection(parsed_data)
-    attack_report = attack_detection(known_results, proto_results)
+    injection_results = sql_injection_detection(parsed_data)
+    attack_report = determine_attack(known_results, proto_results, injection_results)
 
     print("\n--- Final Report ---")
     for entry in attack_report:
