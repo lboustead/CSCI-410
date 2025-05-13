@@ -1,13 +1,14 @@
 import re
 from collections import defaultdict
 
-def load_log_file(path):
+def load_file(path):
     try:
         with open(path, 'r') as f:
             return f.readlines()
     except Exception as e:
         print(f"Error: {e}")
         return []
+
 
 def analyze_log(lines):
     events = []
@@ -17,12 +18,13 @@ def analyze_log(lines):
             "line": line.strip(),
             "ip": ip.group() if ip else None,
             "failed_login": "failed login" in line.lower(),
-            "timestamp": line[:19]  # rough timestamp parsing
+            "timestamp": line[:19]
         }
         events.append(event)
     return events
 
-def detect_known_patterns(events, threshold=5):
+
+def known_pattern_detection(events, threshold=5):
     failed_counts = defaultdict(int)
     for e in events:
         if e["failed_login"] and e["ip"]:
@@ -30,7 +32,8 @@ def detect_known_patterns(events, threshold=5):
     flagged = {ip: count for ip, count in failed_counts.items() if count >= threshold}
     return {"brute_force": flagged}
 
-def detect_prototype_patterns(events):
+
+def pattern_prototype_detection(events):
     ip_usernames = defaultdict(set)
     for e in events:
         match = re.search(r'user\s+(\w+)', e["line"], re.IGNORECASE)
@@ -39,7 +42,8 @@ def detect_prototype_patterns(events):
     anomalies = {ip: users for ip, users in ip_usernames.items() if len(users) > 3}
     return {"multi_user_access": anomalies}
 
-def determine_attack(known, prototype):
+
+def attack_detection(known, prototype):
     report = []
     if known["brute_force"]:
         report.append("Brute-force attack detected from:")
@@ -53,13 +57,15 @@ def determine_attack(known, prototype):
         report.append("No suspicious activity detected.")
     return report
 
+
 def main():
+    # Call all functions in order
     path = input("Enter path to log file: ")
-    log_lines = load_log_file(path)
+    log_lines = load_file(path)
     parsed_data = analyze_log(log_lines)
-    known_results = detect_known_patterns(parsed_data)
-    proto_results = detect_prototype_patterns(parsed_data)
-    attack_report = determine_attack(known_results, proto_results)
+    known_results = known_pattern_detection(parsed_data)
+    proto_results = pattern_prototype_detection(parsed_data)
+    attack_report = attack_detection(known_results, proto_results)
 
     print("\n--- Final Report ---")
     for entry in attack_report:
